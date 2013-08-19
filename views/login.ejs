@@ -1,0 +1,41 @@
+<%- include header %>
+<form >
+  用户名：<input type="text" class="login_name" name="name"/><br />
+  密码：  <input type="password" class="login_password" name="password"/><br />
+          <input type="button" class="login_button" value="登录"/>
+</form>
+<script>
+$(".login_button").click(function(){
+     $.ajax({
+                type: "Post",
+                url: "/login",
+                dataType: "json",
+                cache: false,
+                timeout: 5000,
+                jsonpCallback: "data",
+                data:{name:$(".login_name").val(),password:$(".login_password").val()},
+                success: function(data) {
+                     switch(data)
+                     {
+                     	case "0":
+                     	self.location="/";
+                     	break;
+                     	case "1":
+                     	alert("帐号不存在");
+                     	break;
+                     	case "2":
+                     	alert("密码错误");
+                     	break;
+                     	default:
+                     	break;
+                     }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                     alert('error ' + textStatus + " " + errorThrown);
+                }
+            });
+
+})
+	
+</script>
+<%- include footer %>
