@@ -51,17 +51,38 @@ var io=socketio.listen(server);
 //socket模块
 
 var chatInfra = io.of("/chat_infra").on("connection", function(socket){
+        socket.send(JSON.stringify({
+                type:'user_entered',
+                message:'Welcome to the most interesting ' +'chat room on earth!'
+         }));
+  
+     
+        socket.on('message',function(data){
+            data=JSON.parse(data);
+            console.log(data);
+            switch(data.type){
+              case 'chatmessage':
+                  socket.join(data.roomName);
+                 
+                  socket.in(data.roomName).broadcast.send(JSON.stringify({
+                    type:'chatmessage',
+                    message:data.message
+                  }));
+                break;
+              case 'chooseroom':
+                  var room=data;
 
-         socket.send(JSON.stringify(
-                        {
-                          type:'serverMessage',
-                          message:'Welcome to the most interesting ' +'chat room on earth!'
-                        }
-                        ));
-         socket.emit('user_entered',  
-                        {
-                          type:'serverMessage',
-                          message:'Welcome to the most interesting ' +'chat room on earth!'
-                        }
-                    );
+                  socket.join(room.roomName);
+                  var comSocket=chatInfra.sockets[socket.id];
+                  comSocket.join(room.roomName);
+                  comSocket.room = room.roomName;
+                  socket.in(room.roomName).send(JSON.stringify({
+                    type:'chooseroom',
+                    result:true
+                  }));
+              default:
+                break;
+            }
+        })
+       
 });

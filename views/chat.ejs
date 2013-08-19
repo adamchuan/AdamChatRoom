@@ -1,25 +1,72 @@
 <%- include header %>
 
-<div id="chatbox" style="min-height:400px;width:600px;border:1px #999 solid">
+<div id="roomnav" >
+   <ul>
+       <li style="display:inline;cursor:pointer">Adam的房间</li>
+       <li style="display:inline;cursor:pointer">CM的房间</li>
+   </ul>
+</div>
+<span id="chooseroom" >请选择聊天室</span>
+<div id="chatwrap" style="display:none">
+<div id="chatbox" style="min-height:400px;width:600px;border:1px #999 solid;clear:">
     
 
 </div>
-
-
+<div style="margin-top:20px;">
+<textarea id="message" rows="10" cols="50"></textarea><br/>
+<input id="send_button" type="button" value="send"/>
+</div>
+</div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    var host = '127.0.0.1';
-    var port = 3000;
-    var url = 'ws://'+host+':'+port+'/';
+var host = '127.0.0.1';
+var port = 3000;
+var url = 'ws://'+host+':'+port+'/';
+var socket = io.connect(url+"chat_infra");
+var roomName;
+$("#roomnav").click(function(e){
+    roomName=$(e.target).html();
+    socket.send(JSON.stringify({
+        type:'chooseroom',
+        roomName:roomName
+    }));
+});
+function ShowNewMessage(message){
+    $("#chatbox").append(message+"<br/>");
+}
 
-    var socket = io.connect(url+"chat_infra");
-
-    socket.on('user_entered', function (message) {
-
-            if (message.type == "serverMessage") {
-                $("#chatbox").append(message.message+"<br/>");
-            }
+    socket.on("message",function(message){
+        message=JSON.parse(message);
+        switch(message.type){
+            case "user_entered":
+                 $("#chatbox").append(message.message+"<br/>");
+                break;
+            case "chatmessage":
+                 $("#chatbox").append(message.message+"<br/>");
+                break;  
+            case "chooseroom":
+                 if(message.result){
+                     $("#chooseroom").hide();
+                     $("#chatwrap").fadeIn(600);
+                     ShowNewMessage("进入"+roomName+"成功");
+                    
+                 }
+                 else{
+                    roomName=undefined; 
+                    alert("进入房间失败");    
+                }
+                break;
+            default:
+                break;
         }
-    )
+
+    });
+    $("#send_button").click(function(){
+        socket.send(JSON.stringify({
+            type:'chatmessage',
+            message:$("#message").val(),
+            roomName:roomName
+        }));
+    });
 </script>
 <%- include footer %>
